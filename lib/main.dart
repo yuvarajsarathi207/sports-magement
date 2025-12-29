@@ -1,0 +1,26 @@
+import 'package:flutter/material.dart';
+import 'package:hackoftrading/constants/app_routes.dart';
+import 'package:hackoftrading/routes/app_router.dart';
+import 'package:hackoftrading/themes/app_theme.dart';
+
+void main() {
+  runApp(const MainClass());
+}
+
+class MainClass extends StatelessWidget {
+  const MainClass({super.key});
+  
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Keep Playing',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.light,
+      initialRoute: AppRoutes.initialRoute,
+      onGenerateRoute: AppRouter.generateRoute,
+      onUnknownRoute: AppRouter.onUnknownRoute,
+    );
+  }
+}
