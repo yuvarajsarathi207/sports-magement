@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:hackoftrading/constants/app_routes.dart';
 import 'package:hackoftrading/constants/app_strings.dart';
@@ -23,6 +25,9 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     // TODO: implement initState
     super.initState();
+
+    emailCtrl.text = 'john1@example.com';
+    passCtrl.text = 'password123';
   }
   final _formKey = GlobalKey<FormState>();
   final emailCtrl = TextEditingController();
@@ -41,30 +46,47 @@ class _LoginScreenState extends State<LoginScreen> {
       isLoading = true;
     });
 
-    final success = await AuthService.loginUser(
-      email: emailCtrl.text,
-      password: passCtrl.text,
-    );
+    try {
+      final userdata = await AuthService.loginUser(
+        email: emailCtrl.text,
+        password: passCtrl.text,
+      );
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    setState(() {
-      isLoading = false;
-    });
-
-    if (success) {
-      final user = AuthService.currentUser;
-      if (user != null) {
-        // Redirect based on role
-        final route = user.role == UserRole.organization
-            ? AppRoutes.orgDashboard
-            : AppRoutes.playerDashboard;
-        Navigator.pushReplacementNamed(context, route);
-      } else {
-        Navigator.pushReplacementNamed(context, AppRoutes.login);
-      }
-    } else {
       setState(() {
+        isLoading = false;
+      });
+
+      if (userdata == null || userdata.trim().isEmpty) {
+        setState(() {
+          error = AppStrings.loginFailed;
+        });
+        return;
+      }
+
+      final data = jsonDecode(userdata) as Map<String, dynamic>?;
+      final user = data?['user'] as Map<String, dynamic>?;
+      final role = user?['role'] as String?;
+
+      String? route;
+      if (role == 'organizer' || role == 'organization') {
+        route = AppRoutes.orgDashboard;
+      } else if (role == 'player') {
+        route = AppRoutes.playerDashboard;
+      }
+
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          route!,
+          (route) => false,
+        );
+    } catch (e, stack) {
+      debugPrint('Login error: $e');
+      debugPrint(stack.toString());
+      if (!mounted) return;
+      setState(() {
+        isLoading = false;
         error = AppStrings.loginFailed;
       });
     }
@@ -82,19 +104,24 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: Stack(
         children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/logo.jpg',
+              fit: BoxFit.cover,
+              cacheWidth: 1080,
+              cacheHeight: 1920,
+            ),
+          ),
           SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Form(
-                key: _formKey,
+            child: Form(
+              key: _formKey,
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
                 child: Center(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const SizedBox(height: 60),
-                      const AppLogo(height: 80),
-                      const SizedBox(height: 40),
                       ErrorMessage(
                         message: error,
                         onDismiss: () => setState(() => error = ""),
@@ -132,7 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
-          AppLoader(isLoading: isLoading),
+          // AppLoader(isLoading: isLoading),
         ],
       ),
     );

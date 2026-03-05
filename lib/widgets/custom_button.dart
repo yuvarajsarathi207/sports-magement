@@ -3,7 +3,7 @@ import '../constants/app_colors.dart';
 
 class CustomButton extends StatelessWidget {
   final String text;
-  final VoidCallback? onPressed;
+  final void Function()? onPressed;
   final bool isLoading;
   final bool isOutlined;
   final Color? backgroundColor;
@@ -65,7 +65,7 @@ class CustomButton extends StatelessWidget {
         width: 20,
         child: CircularProgressIndicator(
           strokeWidth: 2,
-          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          // valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
         ),
       );
     }

@@ -1,13 +1,10 @@
 import 'dart:convert';
+import 'package:flutter/cupertino.dart';
+import 'package:hackoftrading/utils/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../models/user_model.dart';
 
 class AuthService {
-  // In-memory storage for demo (replace with actual storage/shared_preferences)
-  static UserModel? _currentUser;
-  
-  static UserModel? get currentUser => _currentUser;
-  static bool get isAuthenticated => _currentUser != null;
   
   static Future<bool> registerUser({
     required String username,
@@ -17,13 +14,13 @@ class AuthService {
     required String role, // 'organization' or 'player'
   }) async {
     final response = await http.post(
-      Uri.parse('https://fakestoreapi.com/users'),
+      Uri.parse('https://keepplaying.in/api/register'),
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
       body: jsonEncode({
-        "id": 0,
-        "username": username,
+        "name": username,
         "email": email,
         "password": password,
         "mobile": mobile,
@@ -32,53 +29,43 @@ class AuthService {
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
-      // For demo, create user model
-      _currentUser = UserModel(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        email: email,
-        mobile: mobile,
-        username: username,
-        role: role == 'organization' ? UserRole.organization : UserRole.player,
-      );
-      print("User Created: ${response.body}");
+      await AppPreferences.setCustom('userDetails', response.body);
+      debugPrint("User Created: ${response.body}");
       return true;
     } else {
-      print("Error: ${response.body}");
+      debugPrint("Error: ${response.body}");
       return false;
     }
   }
 
-  static Future<bool> loginUser({
+  /// Returns response body JSON string on success, null on failure.
+  static Future<String?> loginUser({
     required String email,
     required String password,
   }) async {
-    final response = await http.get(
-      Uri.parse('https://fakestoreapi.com/users'),
+    final response = await http.post(
+      Uri.parse('https://keepplaying.in/api/login'),
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
+      body: jsonEncode({
+        'email': email,
+        'password': password,
+      }),
     );
-
     if (response.statusCode == 200 || response.statusCode == 201) {
-      // For demo, create a mock user
-      // In real app, parse response and get actual user data
-      final role =(email == "org@gmail.com") ?UserRole.organization:UserRole.player;
-      _currentUser = UserModel(
-        id: '1',
-        email: email,
-        mobile: '1234567890',
-        username: email.split('@')[0],
-        role: role,
-      );
-      print("User Logged In: ${response.body}");
-      return true;
+      final body = response.body;
+      debugPrint("User Logged In: $body");
+      // await AppPreferences.setCustom('userDetails', body);
+      return body;
     } else {
-      print("Error: ${response.body}");
-      return false;
+      debugPrint("Error: ${response.body}");
+      return null;
     }
   }
-  
+
   static void logout() {
-    _currentUser = null;
+    AppPreferences.clear();
   }
 }

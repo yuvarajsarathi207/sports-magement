@@ -31,7 +31,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
           child: GestureDetector(
             onTap: onProfileTap,
             child: CircleAvatar(
-              radius: 18,
+              radius: 20,
               backgroundColor: Colors.white.withOpacity(0.2),
               child: const Icon(
                 Icons.person,

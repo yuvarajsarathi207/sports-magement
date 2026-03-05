@@ -10,7 +10,6 @@ class PlayerProfile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = AuthService.currentUser;
 
     return Scaffold(
       appBar: const AppHeader(
@@ -32,14 +31,13 @@ class PlayerProfile extends StatelessWidget {
                       style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 16),
-                    _ProfileRow(label: 'Email', value: user?.email ?? 'N/A'),
-                    _ProfileRow(label: 'Mobile', value: user?.mobile ?? 'N/A'),
-                    _ProfileRow(label: 'Username', value: user?.username ?? 'N/A'),
+                    _ProfileRow(label: 'Email', value: 'sampleemail' ?? 'N/A'),
+                    _ProfileRow(label: 'Mobile', value: 'samplemobile' ?? 'N/A'),
+                    _ProfileRow(label: 'Username', value: 'sampleusername' ?? 'N/A'),
                     _ProfileRow(
                       label: 'Role',
-                      value: user?.role == null
-                          ? 'N/A'
-                          : user!.role.toString().split('.').last.toUpperCase(),
+                      value: 'N/A'
+
                     ),
                   ],
                 ),

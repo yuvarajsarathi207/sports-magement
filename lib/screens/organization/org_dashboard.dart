@@ -3,8 +3,6 @@ import '../../constants/app_routes.dart';
 import '../../constants/app_strings.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/stat_card.dart';
-import '../../widgets/simple_chart.dart';
-import '../../widgets/tournament_table.dart';
 import '../../constants/app_colors.dart';
 
 class OrgDashboard extends StatelessWidget {
@@ -12,87 +10,51 @@ class OrgDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Sample data - replace with actual data from API
-    final tournamentStats = [
-      ChartData(label: 'Jan', value: 5),
-      ChartData(label: 'Feb', value: 8),
-      ChartData(label: 'Mar', value: 12),
-      ChartData(label: 'Apr', value: 10),
-      ChartData(label: 'May', value: 15),
-      ChartData(label: 'Jun', value: 18),
-    ];
-
-    final recentTournaments = [
-      TournamentTableData(
-        name: 'Summer Cricket League',
-        status: 'Published',
-        startDate: '2024-01-15',
-        slots: 12,
-        totalSlots: 16,
-        entryFee: 100,
-        onTap: () => Navigator.pushNamed(context, AppRoutes.orgTournamentList),
-      ),
-      TournamentTableData(
-        name: 'Winter Football Cup',
-        status: 'Draft',
-        startDate: '2024-02-01',
-        slots: 0,
-        totalSlots: 20,
-        entryFee: 150,
-        onTap: () => Navigator.pushNamed(context, AppRoutes.orgTournamentList),
-      ),
-      TournamentTableData(
-        name: 'Spring Basketball',
-        status: 'Ongoing',
-        startDate: '2024-01-10',
-        slots: 14,
-        totalSlots: 16,
-        entryFee: 80,
-        onTap: () => Navigator.pushNamed(context, AppRoutes.orgTournamentList),
-      ),
-    ];
-
     return Scaffold(
+      backgroundColor: Colors.blue.shade50,
       appBar: AppHeader(
         title: AppStrings.orgDashboard,
         showBack: false,
         showProfile: true,
-        onProfileTap: () => Navigator.pushNamed(context, AppRoutes.orgProfile),
+        onProfileTap: () =>
+            Navigator.pushNamed(context, AppRoutes.orgProfile),
       ),
-      body: SingleChildScrollView(
+      body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Statistics Cards
+
+            /// STATS
             Row(
               children: [
                 Expanded(
                   child: StatCard(
-                    title: 'Total Tournaments',
+                    title: 'Tournaments',
                     value: '24',
-                    icon: Icons.tour,
+                    icon: Icons.emoji_events,
                     color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: StatCard(
-                    title: 'Published',
-                    value: '18',
-                    icon: Icons.publish,
+                    title: 'Ongoing',
+                    value: '5',
+                    icon: Icons.sports_cricket,
                     color: AppColors.success,
                   ),
                 ),
               ],
             ),
+
             const SizedBox(height: 12),
+
             Row(
               children: [
                 Expanded(
                   child: StatCard(
                     title: 'Draft',
-                    value: '4',
+                    value: '3',
                     icon: Icons.edit,
                     color: AppColors.warning,
                   ),
@@ -100,74 +62,127 @@ class OrgDashboard extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: StatCard(
-                    title: 'Total Revenue',
-                    value: '\$2.4K',
-                    icon: Icons.attach_money,
+                    title: 'Revenue',
+                    value: '₹2.4K',
+                    icon: Icons.currency_rupee,
                     color: AppColors.info,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            // Chart
-            SimpleBarChart(
-              title: 'Tournaments Created (Last 6 Months)',
-              data: tournamentStats,
+
+            const SizedBox(height: 30),
+
+            /// ACTIONS
+            _actionCard(
+              context,
+              title: "Create Tournament",
+              subtitle: "Start a new tournament",
+              icon: Icons.add_circle,
+              route: AppRoutes.createTournament,
             ),
-            const SizedBox(height: 20),
-            // Tournament Table
-            TournamentTable(
-              data: recentTournaments,
-              onCreateTap: () => Navigator.pushNamed(
-                context,
-                AppRoutes.createTournament,
-              ),
+
+            const SizedBox(height: 16),
+
+            _actionCard(
+              context,
+              title: "Manage Tournaments",
+              subtitle: "View & manage tournaments",
+              icon: Icons.emoji_events,
+              route: AppRoutes.orgTournamentList,
             ),
-            const SizedBox(height: 20),
-            // Quick Actions
-            Card(
-              child: InkWell(
-                onTap: () => Navigator.pushNamed(context, AppRoutes.orgTournamentList),
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.tour,
-                        color: Theme.of(context).colorScheme.primary,
-                        size: 32,
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Tournament Management',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Create and manage your tournaments',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Icon(Icons.arrow_forward_ios),
-                    ],
+
+            const SizedBox(height: 16),
+
+            currentLiveTournaments()
+
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget currentLiveTournaments() {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Live Tournaments',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+
+          Expanded(
+            child: ListView.builder(
+              itemCount: 15,
+              itemBuilder: (context, index) {
+                return Container(
+                  height: 100,
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
                   ),
+                  child: Text('Tournament ${index + 1}'),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _actionCard(
+      BuildContext context, {
+        required String title,
+        required String subtitle,
+        required IconData icon,
+        required String route,
+      }) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: () => Navigator.pushNamed(context, route),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 26,
+                backgroundColor:
+                Theme.of(context).colorScheme.primary.withOpacity(.1),
+                child: Icon(icon,
+                    color: Theme.of(context).colorScheme.primary),
+              ),
+              const SizedBox(width: 16),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ],
+
+              const Icon(Icons.arrow_forward_ios, size: 16),
+            ],
+          ),
         ),
       ),
     );
