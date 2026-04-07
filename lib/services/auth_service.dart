@@ -144,6 +144,66 @@ class AuthService {
     }
   }
 
+  /// Organizer Dashboard
+  /// GET /organizer/dashboard
+  /// Response: { "tournaments": [...], "stats": {...} }
+  static Future<Map<String, dynamic>?> getOrganizerDashboard() async {
+    try {
+      final token = await AppPreferences.getString('token');
+
+      final response = await http.get(
+        Uri.parse("$_baseUrl/organizer/dashboard"),
+        headers: {
+          ..._headers,
+          "Accept": "application/json",
+          "Authorization": "Bearer ${token ?? ''}",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map<String, dynamic>) return decoded;
+        return null;
+      }
+
+      debugPrint("❌ Organizer Dashboard Failed: ${response.body}");
+      return null;
+    } catch (e) {
+      debugPrint("❌ Organizer Dashboard Exception: $e");
+      return null;
+    }
+  }
+
+  /// Player Dashboard
+  /// GET /player/dashboard
+  /// Response: { "subscriptions": [...], "interests": [...] }
+  static Future<Map<String, dynamic>?> getPlayerDashboard() async {
+    try {
+      final token = await AppPreferences.getString('token');
+
+      final response = await http.get(
+        Uri.parse("$_baseUrl/player/dashboard"),
+        headers: {
+          ..._headers,
+          "Accept": "*/*",
+          "Authorization": "Bearer ${token ?? ''}",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map<String, dynamic>) return decoded;
+        return null;
+      }
+
+      debugPrint("❌ Player Dashboard Failed: ${response.body}");
+      return null;
+    } catch (e) {
+      debugPrint("❌ Player Dashboard Exception: $e");
+      return null;
+    }
+  }
+
   /// Mark tournament as interested for player.
   static Future<bool> markTournamentInterest(int tournamentId) async {
     try {

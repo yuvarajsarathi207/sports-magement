@@ -14,12 +14,47 @@ class OrgDashboard extends StatefulWidget {
 }
 
 class _OrgDashboardState extends State<OrgDashboard> {
-  List<dynamic>? tournamentList = [];
+  List<dynamic> tournamentList = const [];
+  Map<String, dynamic> _stats = const {};
+  bool _loading = true;
+  String? _error;
+
+  int _safeInt(dynamic v) {
+    if (v is int) return v;
+    if (v is String) return int.tryParse(v) ?? 0;
+    if (v is double) return v.toInt();
+    return 0;
+  }
+
+  Future<void> _loadDashboard() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final data = await AuthService.getOrganizerDashboard();
+      if (!mounted) return;
+      setState(() {
+        tournamentList =
+            (data?['tournaments'] is List) ? List<dynamic>.from(data!['tournaments']) : <dynamic>[];
+        _stats = (data?['stats'] is Map)
+            ? Map<String, dynamic>.from(data!['stats'])
+            : <String, dynamic>{};
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = 'Something went wrong';
+      });
+    }
+  }
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
+    _loadDashboard();
   }
 
   @override
@@ -61,7 +96,7 @@ class _OrgDashboardState extends State<OrgDashboard> {
                   Expanded(
                     child: StatCard(
                       title: 'Tournaments',
-                      value: '0',
+                      value: _safeInt(_stats['total_tournaments']).toString(),
                       icon: Icons.emoji_events,
                       color: AppColors.primary,
                     ),
@@ -70,7 +105,7 @@ class _OrgDashboardState extends State<OrgDashboard> {
                   Expanded(
                     child: StatCard(
                       title: 'Ongoing',
-                      value: '0',
+                      value: _safeInt(_stats['active_tournaments']).toString(),
                       icon: Icons.sports_cricket,
                       color: AppColors.success,
                     ),
@@ -85,7 +120,10 @@ class _OrgDashboardState extends State<OrgDashboard> {
                   Expanded(
                     child: StatCard(
                       title: 'Draft',
-                      value: '0',
+                      value: tournamentList
+                          .where((t) => (t is Map) && (t['status'] == 'draft'))
+                          .length
+                          .toString(),
                       icon: Icons.edit,
                       color: AppColors.warning,
                     ),
@@ -93,9 +131,9 @@ class _OrgDashboardState extends State<OrgDashboard> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: StatCard(
-                      title: 'Revenue',
-                      value: '₹0K',
-                      icon: Icons.currency_rupee,
+                      title: 'Open',
+                      value: _safeInt(_stats['open_tournaments']).toString(),
+                      icon: Icons.lock_open,
                       color: AppColors.info,
                     ),
                   ),
@@ -114,40 +152,33 @@ class _OrgDashboardState extends State<OrgDashboard> {
               ),
 
               const SizedBox(height: 16),
-
-              FutureBuilder(
-                future: AuthService.getOrganizerTournaments(),
-                builder: (context, snapshot) {
-                  /// Loading
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
-                  }
-
-                  /// Error
-                  if (snapshot.hasError) {
-                    return const Center(child: Text("Something went wrong"));
-                  }
-
-                  /// No Data
-                  tournamentList = snapshot.data ?? [];
-
-                  return tournamentList!.isNotEmpty
-                      ? currentLiveTournaments()
-                      : Expanded(
-                          child: Center(
-                            child: Text(
-                              'No tournaments available.\nCreate your first tournament!',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ),
-                        );
-                },
-              ),
+              if (_loading)
+                const Expanded(child: Center(child: CircularProgressIndicator()))
+              else if (_error != null)
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      _error!,
+                      style: TextStyle(color: colorScheme.onSurfaceVariant),
+                    ),
+                  ),
+                )
+              else if (tournamentList.isEmpty)
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      'No tournaments available.\nCreate your first tournament!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                currentLiveTournaments(),
             ],
           ),
         ),
@@ -170,9 +201,9 @@ class _OrgDashboardState extends State<OrgDashboard> {
 
           Expanded(
             child: ListView.builder(
-              itemCount: tournamentList?.length ?? 0,
+              itemCount: tournamentList.length,
               itemBuilder: (context, index) {
-                final tournament = tournamentList![index];
+                final tournament = tournamentList[index];
                 final interestsCount =
                     tournament['interests_count'] ??
                     (tournament['interests'] is List

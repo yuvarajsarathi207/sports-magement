@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:hackoftrading/services/auth_service.dart';
 import '../../constants/app_routes.dart';
 import '../../constants/app_strings.dart';
+import '../../constants/app_colors.dart';
+import '../../models/tournament_model.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/stat_card.dart';
-import '../../constants/app_colors.dart';
 
 class PlayerDashboard extends StatefulWidget {
   const PlayerDashboard({super.key});
@@ -15,14 +16,159 @@ class PlayerDashboard extends StatefulWidget {
 
 class _PlayerDashboardState extends State<PlayerDashboard> {
   static const String _upiId = 'sportsmagement@upi';
-  List<dynamic>? tournamentList = [];
+  List<Map<String, dynamic>> tournamentList = const [];
+  BallType _selectedBallType = BallType.cricket;
   final Set<int> _interestLoadingIds = <int>{};
   final Set<int> _interestedTournamentIds = <int>{};
 
+  bool _listLoading = true;
+  String? _listError;
+
+  int _subscriptionsTotal = 0;
+  int _subscriptionsPending = 0;
+  int _interestsTotal = 0;
+
+  int _asInt(dynamic v) {
+    if (v is int) return v;
+    if (v is String) return int.tryParse(v) ?? 0;
+    return 0;
+  }
+
+  List<Map<String, dynamic>> _extractTournamentsFromPlayerDashboard(
+    Map<String, dynamic>? dashboard,
+  ) {
+    final Map<int, Map<String, dynamic>> byId = {};
+
+    final subs = (dashboard?['subscriptions'] is List)
+        ? List<dynamic>.from(dashboard!['subscriptions'])
+        : const <dynamic>[];
+    final ints = (dashboard?['interests'] is List)
+        ? List<dynamic>.from(dashboard!['interests'])
+        : const <dynamic>[];
+
+    for (final s in subs) {
+      if (s is! Map) continue;
+      final t = s['tournament'];
+      if (t is! Map) continue;
+      final id = _asInt(t['id']);
+      if (id == 0) continue;
+      byId[id] = Map<String, dynamic>.from(t);
+    }
+    for (final i in ints) {
+      if (i is! Map) continue;
+      final t = i['tournament'];
+      if (t is! Map) continue;
+      final id = _asInt(t['id']);
+      if (id == 0) continue;
+      byId[id] = Map<String, dynamic>.from(t);
+    }
+
+    final list = byId.values.toList();
+    list.sort((a, b) => _asInt(b['id']).compareTo(_asInt(a['id'])));
+    return list;
+  }
+
+  BallType? _parseBallTypeField(String? raw) {
+    if (raw == null || raw.isEmpty) return null;
+    var ball = raw.toLowerCase().trim();
+    if (ball.contains('.')) ball = ball.split('.').last;
+    ball = ball.replaceAll(RegExp(r'[\s-]+'), '_');
+    if (ball == 'soccer') ball = 'football';
+    for (final e in BallType.values) {
+      if (e.name == ball) return e;
+    }
+    return null;
+  }
+
+  BallType? _inferBallTypeFromCategoryName(String catName) {
+    if (catName.contains('football') || catName.contains('soccer')) {
+      return BallType.football;
+    }
+    if (catName.contains('cricket')) return BallType.cricket;
+    if (catName.contains('basketball')) return BallType.basketball;
+    if (catName.contains('tennis')) return BallType.tennis;
+    if (catName.contains('volleyball')) return BallType.volleyball;
+    return null;
+  }
+
+  /// Single source of truth for filter + list row: merges `ball_type` with `sports_category`.
+  /// When the API sends a default `ball_type` (e.g. cricket) but the category name matches
+  /// another sport (e.g. Football), we trust the category so the list matches the dropdown.
+  BallType _ballTypeFromMap(dynamic tournament) {
+    if (tournament is! Map) return BallType.other;
+    final map = tournament;
+
+    final raw = map['ball_type']?.toString().trim() ??
+        map['ballType']?.toString().trim();
+    final fromField = _parseBallTypeField(raw);
+
+    final cat = map['sports_category'];
+    final catName = cat is Map
+        ? (cat['name']?.toString().toLowerCase() ?? '')
+        : '';
+    final fromCat = _inferBallTypeFromCategoryName(catName);
+
+    if (fromField != null && fromCat != null) {
+      if (fromField == fromCat) return fromField;
+      // Backend often stores a default ball_type while category reflects the real sport.
+      if (fromField == BallType.cricket && fromCat == BallType.football) {
+        return BallType.football;
+      }
+      if (fromField == BallType.football && fromCat == BallType.cricket) {
+        return BallType.cricket;
+      }
+      return fromField;
+    }
+    if (fromField != null) return fromField;
+    if (fromCat != null) return fromCat;
+    return BallType.other;
+  }
+
+  List<dynamic> get _filteredTournaments {
+    final list = tournamentList;
+    return list.where((t) => _ballTypeFromMap(t) == _selectedBallType).toList();
+  }
+
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
+    _fetchPlayerTournaments();
+  }
+
+  Future<void> _fetchPlayerTournaments() async {
+    setState(() {
+      _listLoading = true;
+      _listError = null;
+    });
+    try {
+      final dash = await AuthService.getPlayerDashboard();
+      if (!mounted) return;
+      setState(() {
+        final subs = (dash?['subscriptions'] is List)
+            ? List<dynamic>.from(dash!['subscriptions'])
+            : const <dynamic>[];
+        final ints = (dash?['interests'] is List)
+            ? List<dynamic>.from(dash!['interests'])
+            : const <dynamic>[];
+
+        _subscriptionsTotal = subs.length;
+        _subscriptionsPending = subs
+            .where(
+              (e) => e is Map && (e['status']?.toString().toLowerCase() == 'pending'),
+            )
+            .length;
+        _interestsTotal = ints.length;
+
+        tournamentList = _extractTournamentsFromPlayerDashboard(dash);
+        _listLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _listLoading = false;
+        _listError = 'Something went wrong';
+      });
+    }
   }
 
   @override
@@ -56,14 +202,14 @@ class _PlayerDashboardState extends State<PlayerDashboard> {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              /// STATS
               Row(
                 children: [
                   Expanded(
                     child: StatCard(
                       title: 'Tournaments',
-                      value: tournamentList!.length.toString(),
+                      value: _filteredTournaments.length.toString(),
                       icon: Icons.emoji_events,
                       color: AppColors.primary,
                     ),
@@ -71,84 +217,73 @@ class _PlayerDashboardState extends State<PlayerDashboard> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: StatCard(
-                      title: 'Ongoing',
-                      value: '0',
-                      icon: Icons.sports_cricket,
+                      title: 'Subscriptions',
+                      value: _subscriptionsTotal.toString(),
+                      icon: Icons.how_to_reg,
                       color: AppColors.success,
                     ),
                   ),
                 ],
               ),
-
               const SizedBox(height: 12),
-
               Row(
                 children: [
                   Expanded(
                     child: StatCard(
-                      title: 'Draft',
-                      value: '0',
-                      icon: Icons.edit,
+                      title: 'Pending',
+                      value: _subscriptionsPending.toString(),
+                      icon: Icons.pending_actions,
                       color: AppColors.warning,
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: StatCard(
-                      title: 'Revenue',
-                      value: '₹0K',
-                      icon: Icons.currency_rupee,
+                      title: 'Interests',
+                      value: _interestsTotal.toString(),
+                      icon: Icons.favorite,
                       color: AppColors.info,
                     ),
                   ),
                 ],
               ),
-
-              const SizedBox(height: 30),
-
-              /// ACTIONS
-              // _actionCard(
-              //   context,
-              //   title: "Create Tournament",
-              //   subtitle: "Start a new tournament",
-              //   icon: Icons.add_circle,
-              //   route: AppRoutes.createTournament,
-              // ),
-              const SizedBox(height: 16),
-
-              FutureBuilder(
-                future: AuthService.getPlayerTournaments(),
-                builder: (context, snapshot) {
-                  /// Loading
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
-                  }
-
-                  /// Error
-                  if (snapshot.hasError) {
-                    return const Center(child: Text("Something went wrong"));
-                  }
-
-                  /// No Data
-                  tournamentList = snapshot.data ?? [];
-
-                  return tournamentList!.isNotEmpty
-                      ? currentLiveTournaments()
-                      : Expanded(
-                          child: Center(
-                            child: Text(
-                              'No tournaments available.\nCreate your first tournament!',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ),
-                        );
-                },
+              const SizedBox(height: 24),
+              const Text(
+                'Live Tournaments',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
+              const SizedBox(height: 10),
+              _ballTypeDropdown(colorScheme),
+              const SizedBox(height: 12),
+              if (_listLoading)
+                const Expanded(
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (_listError != null)
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      _listError!,
+                      style: TextStyle(color: colorScheme.onSurfaceVariant),
+                    ),
+                  ),
+                )
+              else if (tournamentList.isEmpty)
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      'No tournaments available.\nCreate your first tournament!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                _tournamentListBody(),
             ],
           ),
         ),
@@ -156,24 +291,81 @@ class _PlayerDashboardState extends State<PlayerDashboard> {
     );
   }
 
-  Widget currentLiveTournaments() {
+  IconData _iconForBallType(BallType type) {
+    switch (type) {
+      case BallType.cricket:
+        return Icons.sports_cricket;
+      case BallType.football:
+        return Icons.sports_soccer;
+      case BallType.basketball:
+        return Icons.sports_basketball;
+      case BallType.tennis:
+        return Icons.sports_tennis;
+      case BallType.volleyball:
+        return Icons.sports_volleyball;
+      case BallType.other:
+        return Icons.sports;
+    }
+  }
+
+  Widget _ballTypeDropdown(ColorScheme colorScheme) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return DropdownButtonFormField<BallType>(
+      value: _selectedBallType,
+      decoration: InputDecoration(
+        labelText: AppStrings.ballType,
+        filled: true,
+        fillColor: colorScheme.surfaceContainerHighest.withOpacity(
+          isDark ? 0.35 : 0.5,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: colorScheme.outline.withOpacity(0.35),
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: colorScheme.outline.withOpacity(0.35),
+          ),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
+      ),
+      items: BallType.values.map((type) {
+        return DropdownMenuItem(
+          value: type,
+          child: Text(type.name.toUpperCase()),
+        );
+      }).toList(),
+      onChanged: (v) => setState(() => _selectedBallType = v!),
+    );
+  }
+
+  Widget _tournamentListBody() {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final filtered = _filteredTournaments;
     return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Live Tournaments',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-
-          Expanded(
-            child: ListView.builder(
-              itemCount: tournamentList?.length ?? 0,
+      child: filtered.isEmpty
+                ? Center(
+                    child: Text(
+                      'No ${_selectedBallType.name} tournaments right now.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+              itemCount: filtered.length,
               itemBuilder: (context, index) {
-                final tournament = tournamentList![index];
+                final tournament = filtered[index];
                 final tournamentId = tournament['id'];
                 final hasValidId = tournamentId is int;
                 final isInterestLoading =
@@ -181,6 +373,7 @@ class _PlayerDashboardState extends State<PlayerDashboard> {
                 final isInterested =
                     hasValidId &&
                     _interestedTournamentIds.contains(tournamentId);
+                final resolvedBall = _ballTypeFromMap(tournament);
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
@@ -249,14 +442,14 @@ class _PlayerDashboardState extends State<PlayerDashboard> {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(
-                            Icons.sports_soccer,
+                          Icon(
+                            _iconForBallType(resolvedBall),
                             size: 16,
                             color: Colors.grey,
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            tournament['sports_category']?['name'] ?? '',
+                            resolvedBall.name.toUpperCase(),
                             style: TextStyle(
                               color: colorScheme.onSurfaceVariant,
                             ),
@@ -334,9 +527,6 @@ class _PlayerDashboardState extends State<PlayerDashboard> {
                 );
               },
             ),
-          ),
-        ],
-      ),
     );
   }
 
