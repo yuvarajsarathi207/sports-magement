@@ -4,7 +4,7 @@ import 'package:hackoftrading/routes/app_router.dart';
 import 'package:hackoftrading/themes/app_theme.dart';
 import 'package:hackoftrading/utils/shared_preferences.dart';
 
-void main()async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppPreferences.init();
   runApp(const MainClass());
@@ -20,7 +20,7 @@ class MainClass extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.light,
+      themeMode: ThemeMode.dark,
       initialRoute: AppRoutes.initialRoute,
       onGenerateRoute: AppRouter.generateRoute,
       onUnknownRoute: AppRouter.onUnknownRoute,

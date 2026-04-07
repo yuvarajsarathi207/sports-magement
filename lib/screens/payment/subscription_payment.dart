@@ -9,51 +9,81 @@ class SubscriptionPayment extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final bgTop = Color.alphaBlend(
+      Colors.grey.withOpacity(0.18),
+      colorScheme.surface,
+    );
+    final bgBottom = Color.alphaBlend(
+      Colors.grey.withOpacity(0.10),
+      colorScheme.surfaceContainerLowest,
+    );
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: const AppHeader(
         title: AppStrings.paySubscription,
         showBack: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    const Text(
-                      'Subscription Payment',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 16),
-                    const _PaymentRow(label: 'Entry Fee', amount: '\$100'),
-                    const Divider(),
-                    const _PaymentRow(label: 'Total', amount: '\$100', isTotal: true),
-                  ],
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [bgTop, bgBottom],
+          ),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      const Text(
+                        'Subscription Payment',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const _PaymentRow(label: 'Entry Fee', amount: '\$100'),
+                      const Divider(),
+                      const _PaymentRow(
+                        label: 'Total',
+                        amount: '\$100',
+                        isTotal: true,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 24),
-            CustomButton(
-              text: 'Proceed to Payment',
-              icon: Icons.payment,
-              onPressed: () {
-                // Simulate payment success
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Payment Successful! You are now subscribed.')),
-                );
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  AppRoutes.playerDashboard,
-                  (route) => false,
-                );
-              },
-              width: double.infinity,
-            ),
-          ],
+              const SizedBox(height: 24),
+              CustomButton(
+                text: 'Proceed to Payment',
+                icon: Icons.payment,
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Payment Successful! You are now subscribed.',
+                      ),
+                    ),
+                  );
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    AppRoutes.playerDashboard,
+                    (route) => false,
+                  );
+                },
+                width: double.infinity,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -97,4 +127,3 @@ class _PaymentRow extends StatelessWidget {
     );
   }
 }
-

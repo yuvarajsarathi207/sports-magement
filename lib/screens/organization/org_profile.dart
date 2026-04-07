@@ -1,62 +1,103 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+
 import '../../constants/app_routes.dart';
 import '../../constants/app_strings.dart';
 import '../../services/auth_service.dart';
+import '../../utils/shared_preferences.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/custom_button.dart';
 
-class OrgProfile extends StatelessWidget {
+class OrgProfile extends StatefulWidget {
   const OrgProfile({super.key});
 
   @override
+  State<OrgProfile> createState() => _OrgProfileState();
+}
+
+class _OrgProfileState extends State<OrgProfile> {
+  String role = '';
+  String email = '';
+  String mobile = '';
+  String name = '';
+  bool loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    loadUser();
+  }
+
+  Future<void> loadUser() async {
+    final user = await AppPreferences.getCustom('userDetails');
+
+    if (user != null) {
+      final data = jsonDecode(user);
+      final userData = data['user'];
+
+      setState(() {
+        role = userData['role'] ?? '';
+        email = userData['email'] ?? '';
+        mobile = userData['mobile'] ?? '';
+        name = userData['name'] ?? '';
+        loading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final bgTop = Color.alphaBlend(
+      Colors.grey.withOpacity(0.18),
+      colorScheme.surface,
+    );
+    final bgBottom = Color.alphaBlend(
+      Colors.grey.withOpacity(0.10),
+      colorScheme.surfaceContainerLowest,
+    );
 
     return Scaffold(
-      appBar: const AppHeader(
-        title: AppStrings.profile,
-        showBack: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Profile Information',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 16),
-                    _ProfileRow(label: 'Email', value: 'user?.email' ?? 'N/A'),
-                    _ProfileRow(label: 'Mobile', value: 'user?.mobile' ?? 'N/A'),
-                    _ProfileRow(label: 'Username', value: 'user?.username' ?? 'N/A'),
-                    _ProfileRow(
-                      label: 'Role',
-                      value: 'N/A'
-                    ),
-                  ],
-                ),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: const AppHeader(title: AppStrings.profile, showBack: true),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [bgTop, bgBottom],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              _ProfileRow(label: 'Email', value: email),
+              _ProfileRow(label: 'Mobile', value: mobile),
+              _ProfileRow(label: 'Username', value: name),
+              _ProfileRow(label: 'Role', value: role),
+              const SizedBox(height: 30),
+              CustomButton(
+                text: AppStrings.logout,
+                icon: Icons.logout,
+                width: double.infinity,
+                onPressed: () {
+                  AuthService.logout();
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    AppRoutes.login,
+                    (route) => false,
+                  );
+                },
               ),
-            ),
-            const SizedBox(height: 24),
-            CustomButton(
-              text: AppStrings.logout,
-              icon: Icons.logout,
-              onPressed: () {
-                AuthService.logout();
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  AppRoutes.login,
-                  (route) => false,
-                );
-              },
-              width: double.infinity,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -83,12 +124,9 @@ class _ProfileRow extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.w500),
             ),
           ),
-          Expanded(
-            child: Text(value),
-          ),
+          Expanded(child: Text(value)),
         ],
       ),
     );
   }
 }
-

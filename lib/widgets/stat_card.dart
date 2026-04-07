@@ -28,7 +28,10 @@ class StatCard extends StatelessWidget {
               children: [
                 Icon(icon, color: color, size: 28),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: color.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
@@ -49,7 +52,7 @@ class StatCard extends StatelessWidget {
               title,
               style: TextStyle(
                 fontSize: 14,
-                color: AppColors.textSecondary,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -58,5 +61,3 @@ class StatCard extends StatelessWidget {
     );
   }
 }
-
-

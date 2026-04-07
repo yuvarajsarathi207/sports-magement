@@ -10,54 +10,70 @@ class PlayerProfile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final bgTop = Color.alphaBlend(
+      Colors.grey.withOpacity(0.18),
+      colorScheme.surface,
+    );
+    final bgBottom = Color.alphaBlend(
+      Colors.grey.withOpacity(0.10),
+      colorScheme.surfaceContainerLowest,
+    );
 
     return Scaffold(
-      appBar: const AppHeader(
-        title: AppStrings.profile,
-        showBack: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Profile Information',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 16),
-                    _ProfileRow(label: 'Email', value: 'sampleemail' ?? 'N/A'),
-                    _ProfileRow(label: 'Mobile', value: 'samplemobile' ?? 'N/A'),
-                    _ProfileRow(label: 'Username', value: 'sampleusername' ?? 'N/A'),
-                    _ProfileRow(
-                      label: 'Role',
-                      value: 'N/A'
-
-                    ),
-                  ],
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: const AppHeader(title: AppStrings.profile, showBack: true),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [bgTop, bgBottom],
+          ),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Profile Information',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _ProfileRow(label: 'Email', value: 'sampleemail'),
+                      _ProfileRow(label: 'Mobile', value: 'samplemobile'),
+                      _ProfileRow(label: 'Username', value: 'sampleusername'),
+                      _ProfileRow(label: 'Role', value: 'N/A'),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 24),
-            CustomButton(
-              text: AppStrings.logout,
-              icon: Icons.logout,
-              onPressed: () {
-                AuthService.logout();
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  AppRoutes.login,
-                  (route) => false,
-                );
-              },
-              width: double.infinity,
-            ),
-          ],
+              const SizedBox(height: 24),
+              CustomButton(
+                text: AppStrings.logout,
+                icon: Icons.logout,
+                onPressed: () {
+                  AuthService.logout();
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    AppRoutes.login,
+                    (route) => false,
+                  );
+                },
+                width: double.infinity,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -84,12 +100,9 @@ class _ProfileRow extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.w500),
             ),
           ),
-          Expanded(
-            child: Text(value),
-          ),
+          Expanded(child: Text(value)),
         ],
       ),
     );
   }
 }
-

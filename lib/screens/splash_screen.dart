@@ -36,22 +36,24 @@ class _SplashScreenState extends State<SplashScreen> {
         role == 'organizer'
             ? AppRoutes.orgDashboard
             : AppRoutes.playerDashboard,
-            (route) => false,
+        (route) => false,
       );
     } else {
       Navigator.pushReplacementNamed(context, AppRoutes.login);
     }
   }
+
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset(
-              'assets/images/logo.jpg',
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset('assets/images/logo.jpg', fit: BoxFit.cover),
+          ),
+          Positioned.fill(
+            child: Container(color: colorScheme.background.withOpacity(0.35)),
           ),
           Center(
             child: Lottie.asset(

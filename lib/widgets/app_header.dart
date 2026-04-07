@@ -18,12 +18,13 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final List<Widget> appBarActions = [];
-    
+
     if (actions != null) {
       appBarActions.addAll(actions!);
     }
-    
+
     if (showProfile && onProfileTap != null) {
       appBarActions.add(
         Padding(
@@ -32,12 +33,8 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
             onTap: onProfileTap,
             child: CircleAvatar(
               radius: 20,
-              backgroundColor: Colors.white.withOpacity(0.2),
-              child: const Icon(
-                Icons.person,
-                color: Colors.white,
-                size: 20,
-              ),
+              backgroundColor: colorScheme.primary.withOpacity(0.82),
+              child: Icon(Icons.person, color: colorScheme.onPrimary, size: 20),
             ),
           ),
         ),

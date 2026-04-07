@@ -28,8 +28,8 @@ class RoleSelector extends StatelessWidget {
               child: _RoleOption(
                 title: AppStrings.organization,
                 icon: Icons.business,
-                isSelected: selectedRole == 'organization',
-                onTap: () => onRoleSelected('organization'),
+                isSelected: selectedRole == 'organizer',
+                onTap: () => onRoleSelected('organizer'),
               ),
             ),
             const SizedBox(width: 16),

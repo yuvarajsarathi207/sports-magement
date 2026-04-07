@@ -16,66 +16,106 @@ class _TournamentDetailsState extends State<TournamentDetails> {
 
   @override
   Widget build(BuildContext context) {
-    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     final tournamentId = args?['tournamentId'] ?? 0;
 
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final bgTop = Color.alphaBlend(
+      Colors.grey.withOpacity(0.18),
+      colorScheme.surface,
+    );
+    final bgBottom = Color.alphaBlend(
+      Colors.grey.withOpacity(0.10),
+      colorScheme.surfaceContainerLowest,
+    );
+
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: const AppHeader(
         title: AppStrings.tournamentDetails,
         showBack: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Tournament ${1}',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 16),
-                    _DetailRow(label: AppStrings.teamName, value: 'Sample Team'),
-                    _DetailRow(label: AppStrings.location, value: 'Full Location Details'),
-                    _DetailRow(label: AppStrings.startDate, value: '01/01/2024'),
-                    _DetailRow(label: AppStrings.winningDate, value: '15/01/2024'),
-                    _DetailRow(label: AppStrings.slotCount, value: '16 slots'),
-                    _DetailRow(label: AppStrings.entryFee, value: '\$100'),
-                    _DetailRow(label: AppStrings.ballType, value: 'Cricket'),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Rules:',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const Text('Sample tournament rules and regulations...'),
-                  ],
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [bgTop, bgBottom],
+          ),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Tournament $tournamentId',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _DetailRow(
+                        label: AppStrings.teamName,
+                        value: 'Sample Team',
+                      ),
+                      _DetailRow(
+                        label: AppStrings.location,
+                        value: 'Full Location Details',
+                      ),
+                      _DetailRow(
+                        label: AppStrings.startDate,
+                        value: '01/01/2024',
+                      ),
+                      _DetailRow(
+                        label: AppStrings.endDate,
+                        value: '15/01/2024',
+                      ),
+                      _DetailRow(
+                        label: AppStrings.slotCount,
+                        value: '16 slots',
+                      ),
+                      _DetailRow(label: AppStrings.entryFee, value: '\$100'),
+                      _DetailRow(label: AppStrings.ballType, value: 'Cricket'),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Rules:',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const Text('Sample tournament rules and regulations...'),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            if (!isSubscribed)
-              CustomButton(
-                text: AppStrings.subscribe,
-                icon: Icons.check_circle,
-                onPressed: () {
-                  _showSubscribeDialog(context);
-                },
-                width: double.infinity,
-              )
-            else
-              CustomButton(
-                text: AppStrings.subscribed,
-                icon: Icons.check_circle,
-                isOutlined: true,
-                onPressed: null,
-                width: double.infinity,
-              ),
-          ],
+              const SizedBox(height: 16),
+              if (!isSubscribed)
+                CustomButton(
+                  text: AppStrings.subscribe,
+                  icon: Icons.check_circle,
+                  onPressed: () {
+                    _showSubscribeDialog(context);
+                  },
+                  width: double.infinity,
+                )
+              else
+                CustomButton(
+                  text: AppStrings.subscribed,
+                  icon: Icons.check_circle,
+                  isOutlined: true,
+                  onPressed: null,
+                  width: double.infinity,
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -125,12 +165,9 @@ class _DetailRow extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.w500),
             ),
           ),
-          Expanded(
-            child: Text(value),
-          ),
+          Expanded(child: Text(value)),
         ],
       ),
     );
   }
 }
-

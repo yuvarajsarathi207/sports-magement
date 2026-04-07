@@ -1,108 +1,163 @@
 import 'package:flutter/material.dart';
+import 'package:hackoftrading/services/auth_service.dart';
 import '../../constants/app_routes.dart';
 import '../../constants/app_strings.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/stat_card.dart';
 import '../../constants/app_colors.dart';
 
-class OrgDashboard extends StatelessWidget {
+class OrgDashboard extends StatefulWidget {
   const OrgDashboard({super.key});
 
   @override
+  State<OrgDashboard> createState() => _OrgDashboardState();
+}
+
+class _OrgDashboardState extends State<OrgDashboard> {
+  List<dynamic>? tournamentList = [];
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final bgTop = Color.alphaBlend(
+      Colors.grey.withOpacity(0.18),
+      colorScheme.surface,
+    );
+    final bgBottom = Color.alphaBlend(
+      Colors.grey.withOpacity(0.10),
+      colorScheme.surfaceContainerLowest,
+    );
+
     return Scaffold(
-      backgroundColor: Colors.blue.shade50,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppHeader(
         title: AppStrings.orgDashboard,
         showBack: false,
         showProfile: true,
-        onProfileTap: () =>
-            Navigator.pushNamed(context, AppRoutes.orgProfile),
+        onProfileTap: () => Navigator.pushNamed(context, AppRoutes.orgProfile),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-
-            /// STATS
-            Row(
-              children: [
-                Expanded(
-                  child: StatCard(
-                    title: 'Tournaments',
-                    value: '24',
-                    icon: Icons.emoji_events,
-                    color: AppColors.primary,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [bgTop, bgBottom],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              /// STATS
+              Row(
+                children: [
+                  Expanded(
+                    child: StatCard(
+                      title: 'Tournaments',
+                      value: '0',
+                      icon: Icons.emoji_events,
+                      color: AppColors.primary,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: StatCard(
-                    title: 'Ongoing',
-                    value: '5',
-                    icon: Icons.sports_cricket,
-                    color: AppColors.success,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: StatCard(
+                      title: 'Ongoing',
+                      value: '0',
+                      icon: Icons.sports_cricket,
+                      color: AppColors.success,
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
 
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-            Row(
-              children: [
-                Expanded(
-                  child: StatCard(
-                    title: 'Draft',
-                    value: '3',
-                    icon: Icons.edit,
-                    color: AppColors.warning,
+              Row(
+                children: [
+                  Expanded(
+                    child: StatCard(
+                      title: 'Draft',
+                      value: '0',
+                      icon: Icons.edit,
+                      color: AppColors.warning,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: StatCard(
-                    title: 'Revenue',
-                    value: '₹2.4K',
-                    icon: Icons.currency_rupee,
-                    color: AppColors.info,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: StatCard(
+                      title: 'Revenue',
+                      value: '₹0K',
+                      icon: Icons.currency_rupee,
+                      color: AppColors.info,
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
 
-            const SizedBox(height: 30),
+              const SizedBox(height: 30),
 
-            /// ACTIONS
-            _actionCard(
-              context,
-              title: "Create Tournament",
-              subtitle: "Start a new tournament",
-              icon: Icons.add_circle,
-              route: AppRoutes.createTournament,
-            ),
+              /// ACTIONS
+              _actionCard(
+                context,
+                title: "Create Tournament",
+                subtitle: "Start a new tournament",
+                icon: Icons.add_circle,
+                route: AppRoutes.createTournament,
+              ),
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            _actionCard(
-              context,
-              title: "Manage Tournaments",
-              subtitle: "View & manage tournaments",
-              icon: Icons.emoji_events,
-              route: AppRoutes.orgTournamentList,
-            ),
+              FutureBuilder(
+                future: AuthService.getOrganizerTournaments(),
+                builder: (context, snapshot) {
+                  /// Loading
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  }
 
-            const SizedBox(height: 16),
+                  /// Error
+                  if (snapshot.hasError) {
+                    return const Center(child: Text("Something went wrong"));
+                  }
 
-            currentLiveTournaments()
+                  /// No Data
+                  tournamentList = snapshot.data ?? [];
 
-          ],
+                  return tournamentList!.isNotEmpty
+                      ? currentLiveTournaments()
+                      : Expanded(
+                          child: Center(
+                            child: Text(
+                              'No tournaments available.\nCreate your first tournament!',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                        );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget currentLiveTournaments() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -115,17 +170,175 @@ class OrgDashboard extends StatelessWidget {
 
           Expanded(
             child: ListView.builder(
-              itemCount: 15,
+              itemCount: tournamentList?.length ?? 0,
               itemBuilder: (context, index) {
-                return Container(
-                  height: 100,
-                  margin: const EdgeInsets.only(bottom: 10),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
+                final tournament = tournamentList![index];
+                final interestsCount =
+                    tournament['interests_count'] ??
+                    (tournament['interests'] is List
+                        ? tournament['interests'].length
+                        : 0);
+                final interestsCountStr = interestsCount.toString();
+
+                return InkWell(
+                  onTap: () => Navigator.pushNamed(
+                    context,
+                    AppRoutes.tournamentPreview,
+                    arguments: tournament,
                   ),
-                  child: Text('Tournament ${index + 1}'),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isDark
+                            ? colorScheme.outline.withOpacity(0.35)
+                            : Colors.transparent,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          blurRadius: 6,
+                          color: isDark
+                              ? Colors.black.withOpacity(0.35)
+                              : Colors.black.withOpacity(0.08),
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        /// Tournament Name
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                tournament['team_name'] ?? 'N/A',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: tournament['status'] == "published"
+                                    ? (isDark
+                                          ? Colors.green.withOpacity(0.18)
+                                          : Colors.green.shade100)
+                                    : (isDark
+                                          ? Colors.orange.withOpacity(0.18)
+                                          : Colors.orange.shade100),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                tournament['status'] ?? '',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: tournament['status'] == "published"
+                                      ? Colors.green.shade300
+                                      : Colors.orange.shade300,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        /// Sport Category
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.sports_soccer,
+                              size: 16,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              tournament['sports_category']?['name'] ?? '',
+                              style: TextStyle(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 6),
+
+                        /// Location
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on,
+                              size: 16,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              tournament['location'] ?? '',
+                              style: TextStyle(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        /// Bottom Row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Entry Fee: ₹${tournament['entry_fee'] ?? '0'}",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  "Slots: ${tournament['slot_count'] ?? 0}",
+                                  style: TextStyle(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.favorite,
+                                      size: 16,
+                                      color: Colors.red.shade400,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      "Interested: $interestsCountStr",
+                                      style: TextStyle(
+                                        color: colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 );
               },
             ),
@@ -136,12 +349,12 @@ class OrgDashboard extends StatelessWidget {
   }
 
   Widget _actionCard(
-      BuildContext context, {
-        required String title,
-        required String subtitle,
-        required IconData icon,
-        required String route,
-      }) {
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required String route,
+  }) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -154,10 +367,10 @@ class OrgDashboard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 26,
-                backgroundColor:
-                Theme.of(context).colorScheme.primary.withOpacity(.1),
-                child: Icon(icon,
-                    color: Theme.of(context).colorScheme.primary),
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.primary.withOpacity(.1),
+                child: Icon(icon, color: Theme.of(context).colorScheme.primary),
               ),
               const SizedBox(width: 16),
 
@@ -165,15 +378,19 @@ class OrgDashboard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title,
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
-                        color: AppColors.textSecondary,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],

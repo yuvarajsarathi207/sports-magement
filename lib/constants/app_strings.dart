@@ -44,7 +44,7 @@ class AppStrings {
   static const String teamName = 'Team Name';
   static const String location = 'Location';
   static const String startDate = 'Start Date';
-  static const String winningDate = 'Winning Date';
+  static const String endDate = 'End Date';
   static const String slotCount = 'Tournament Slot Count';
   static const String template = 'Template';
   static const String rules = 'Rules';

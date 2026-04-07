@@ -21,7 +21,7 @@ class AppPreferences {
     return _preferences?.getString(key);
   }
   /// Get String
-  static String? getString(String key) {
+  static Future<String?> getString(String key) async {
     return _preferences?.getString(key);
   }
 

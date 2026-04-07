@@ -9,44 +9,61 @@ class OrgTournamentList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final bgTop = Color.alphaBlend(
+      Colors.grey.withOpacity(0.18),
+      colorScheme.surface,
+    );
+    final bgBottom = Color.alphaBlend(
+      Colors.grey.withOpacity(0.10),
+      colorScheme.surfaceContainerLowest,
+    );
     return Scaffold(
-      appBar: const AppHeader(
-        title: AppStrings.tournamentList,
-        showBack: true,
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: CustomButton(
-              text: AppStrings.createTournament,
-              icon: Icons.add,
-              onPressed: () => Navigator.pushNamed(context, AppRoutes.createTournament),
-              width: double.infinity,
-            ),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: const AppHeader(title: AppStrings.tournamentList, showBack: true),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [bgTop, bgBottom],
           ),
-          Expanded(
-            child: ListView.builder(
+        ),
+        child: Column(
+          children: [
+            Padding(
               padding: const EdgeInsets.all(16),
-              itemCount: 0, // Replace with actual tournament count
-              itemBuilder: (context, index) {
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: ListTile(
-                    title: const Text('Tournament Name'),
-                    subtitle: const Text('Status: Draft'),
-                    trailing: const Icon(Icons.arrow_forward_ios),
-                    onTap: () {
-                      // Navigate to edit tournament
-                    },
-                  ),
-                );
-              },
+              child: CustomButton(
+                text: AppStrings.createTournament,
+                icon: Icons.add,
+                onPressed: () =>
+                    Navigator.pushNamed(context, AppRoutes.createTournament),
+                width: double.infinity,
+              ),
             ),
-          ),
-        ],
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: 0, // Replace with actual tournament count
+                itemBuilder: (context, index) {
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: ListTile(
+                      title: const Text('Tournament Name'),
+                      subtitle: const Text('Status: Draft'),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: () {
+                        // Navigate to edit tournament
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
-

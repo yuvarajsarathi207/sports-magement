@@ -51,19 +51,21 @@ class AppRouter {
         );
       
       case AppRoutes.createTournament:
+        final editData = settings.arguments as Map<String, dynamic>?;
         return MaterialPageRoute(
-          builder: (_) => const CreateTournament(),
+          builder: (_) => CreateTournament(editData: editData),
         );
       
-      case AppRoutes.editTournament:
-        final tournament = settings.arguments as dynamic;
-        return MaterialPageRoute(
-          builder: (_) => CreateTournament(tournament: tournament),
-        );
+      // case AppRoutes.editTournament:
+      //   final tournament = settings.arguments as dynamic;
+      //   return MaterialPageRoute(
+      //     builder: (_) => CreateTournament(tournament: tournament),
+      //   );
       
       case AppRoutes.tournamentPreview:
+        final args = settings.arguments as Map<String, dynamic>?;
         return MaterialPageRoute(
-          builder: (_) => const TournamentPreview(),
+          builder: (_) => TournamentPreview(tournamentData: args),
         );
       
       case AppRoutes.orgProfile:
